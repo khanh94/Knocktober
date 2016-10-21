@@ -1,12 +1,13 @@
+setwd('/Users/khanh94/Documents/Kaggle/Knocktober')
 library(data.table)
 library(xgboost)
 library(dplyr)
 
-train <- fread('Train.csv')
+train <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/Train/Train.csv')
 test <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/Test.csv')
-first <- fread('First_Health_Camp_Attended.csv')
-second <- fread('Second_Health_Camp_Attended.csv')
-third <- fread('Third_Health_Camp_Attended.csv')
+first <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/Train/First_Health_Camp_Attended.csv')
+second <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/Train/Second_Health_Camp_Attended.csv')
+third <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/Train/Third_Health_Camp_Attended.csv')
 
 Patient_ID = test$Patient_ID
 Health_Camp_ID = test$Health_Camp_ID
@@ -80,16 +81,11 @@ test$Season = as.numeric(factor(test$Season, levels=c("Winter", "Spring", "Fall"
 train$day <- as.factor(weekdays(train$Registration_Date))
 test$day <- as.factor(weekdays(test$Registration_Date))
 
-train$weekend = 0
-test$weekend = 0
-train$weekend[(train$day == 'Saturday')|(train$day == "Sunday")] = 1
-test$weekend[(test$day == 'Saturday')|(test$day == "Sunday")] = 1
-
 train$day = as.numeric(train$day)
 test$day = as.numeric(test$day)
 
-train$month <- month(train$Registration_Date)
-test$month <- month(test$Registration_Date)
+#train$month = month(train$Registration_Date)
+#test$month = month(test$Registration_Date)
 
 train$Registration_Date = NULL
 test$Registration_Date = NULL
@@ -101,8 +97,8 @@ model_xgb_cv <- xgb.cv(data=as.matrix(train),
                        label=as.matrix(target), 
                        nfold=5, 
                        objective="binary:logistic", 
-                       nrounds=200, 
-                       eta=0.03, 
+                       nrounds=2000, 
+                       eta=0.04, 
                        max_depth=3, 
                        subsample=0.75, 
                        colsample_bytree=0.8, 
@@ -114,8 +110,8 @@ preds = rep(0, nrow(test))
 model_xgb<- xgboost(data=as.matrix(train), 
                        label=as.matrix(target), 
                        objective="binary:logistic", 
-                       nrounds=200, 
-                       eta=0.03, 
+                       nrounds=2000, 
+                       eta=0.04, 
                        max_depth=3, 
                        subsample=0.75, 
                        colsample_bytree=0.8, 
@@ -125,6 +121,6 @@ model_xgb<- xgboost(data=as.matrix(train),
 preds <- predict(model_xgb, as.matrix(test))
 
 submission <- fread('/Users/khanh94/Documents/Kaggle/Knocktober/sample_submission.csv')
-#final_sub = data.frame(Patient_ID = Patient_ID, Health_Camp_ID = Health_Camp_ID, Outcome=preds)
-#write.csv(final_sub, file='final_sub.csv', row.names=FALSE)
+final_sub = data.frame(Patient_ID = Patient_ID, Health_Camp_ID = Health_Camp_ID, Outcome=preds)
+write.csv(final_sub, file='final_sub.csv', row.names=FALSE)
 
